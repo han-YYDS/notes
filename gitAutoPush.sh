@@ -5,7 +5,7 @@
 time=$(date "+%Y-%m-%d %H:%M:%S")
 git add .
 
-read -t 30 -p "请输入提交注释:" msg
+read -t 30 -p "请输入提交注释(进入项目文件夹下进行提交):" msg
 
 if  [ ! "$msg" ] ;then
     echo "[commit message] 默认提交, 提交人: han, 提交时间: ${time}"

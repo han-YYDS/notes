@@ -554,3 +554,42 @@ load时,先查询joinlog表,得到参与会议的Id(是记录id而不是roomId),
 
 
 
+
+
+
+
+
+
+
+
+
+
+外网面板地址: https://8.130.41.106:14324/c51d8639
+内网面板地址: https://172.17.160.69:14324/c51d8639
+username: 2lnjmeog
+password: f5189938
+
+
+
+lsof -i port
+
+
+
+ nohup /usr/bin/java -jar  /root/chat_backend/suc-chat-backend-0.0.1-SNAPSHOT.jar 
+
+
+
+nohup java -jar suc-chat-backend-0.0.1-SNAPSHOT.jar > out.txt
+
+
+
+
+
+
+
+
+
+
+
+
+
