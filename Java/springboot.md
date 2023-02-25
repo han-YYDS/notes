@@ -573,11 +573,7 @@ password: f5189938
 
 lsof -i port
 
-
-
- nohup /usr/bin/java -jar  /root/chat_backend/suc-chat-backend-0.0.1-SNAPSHOT.jar 
-
-
+["10","0001","111001","1","0"] 5 3
 
 nohup java -jar suc-chat-backend-0.0.1-SNAPSHOT.jar > out.txt
 

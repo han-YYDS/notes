@@ -1,0 +1,3 @@
+﻿  demo.cpp
+D:\Profiles\笔记\Notes_git\notes\刷题\LeetCode_demo\LeetCode_demo\demo.cpp(57,5): error C2561: “main”: 函数必须返回值
+D:\Profiles\笔记\Notes_git\notes\刷题\LeetCode_demo\LeetCode_demo\demo.cpp(53): message : 参见“main”的声明
