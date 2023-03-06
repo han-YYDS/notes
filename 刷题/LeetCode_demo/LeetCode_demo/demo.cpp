@@ -6,13 +6,14 @@
 using std::cout;
 using std::endl;
 using std::max;
+using std::min;
 using std::string;
 using std::vector;
 using std::count;
 using std::find;
 
 void print_vector(vector<int> nums) {
-    cout << "[";
+    cout << endl << "[";
     for (auto it : nums) {
         cout << it << ",";
     }
@@ -50,11 +51,57 @@ int findMaxForm(vector<string>& strs, int m, int n) {
 
 }
 
+int combinationSum4(vector<int>& nums, int target) {
+    // 排列数
+    vector<int> dp(nums.size() + 1, 0);
+    dp[0] = 1;
+    for (int i = 0; i <= target; i++) { // 外层容量
+        for (int j = 0; j < nums.size(); j++) { // 内层物品
+            if (i >= nums[j])  dp[i] += dp[i - nums[j]];
+        }
+    }
+    return dp[nums.size()];
+}
+
+int coinChange(vector<int>& coins, int amount) {
+    vector<int> dp(amount + 1, 104);
+    dp[0] = 0;
+    for (int i = 0; i < coins.size(); i++) { // 外侧遍历物品
+        for (int j = 0; j <= amount; j++) { // 内侧遍历容量
+            if (j >= coins[i]) dp[j] = min(dp[j], dp[j - coins[i]] + 1);
+        }
+        print_vector(dp);
+    }
+    return dp[amount];
+}
+
+int dp_max(vector<int>& nums, int from, int to) {
+    vector<int> dp(nums.size() - 1, 0);
+    dp[0] = nums[from];
+    dp[1] = max(nums[from], nums[from + 1]);
+
+    for (int i = 2; i <= to; i++) { // 遍历物品
+        dp[i] = max(dp[i - 1], dp[i - 2] + nums[from + i]);
+    }
+    return dp[nums.size() - 2];
+}
+
+int rob(vector<int>& nums) {
+    if (nums.size() == 1) return nums[0];
+    int max12 = max(nums[0], nums[1]);
+    if (nums.size() == 2) return max12;
+    int max123 = max(max12, nums[2]);
+    if (nums.size() == 3) return max123;
+    return max(dp_max(nums, 0, nums.size() - 2), dp_max(nums, 1, nums.size() - 1));
+}
+
+
 
 int main() {
-    vector<int> nums = {7,9,3,8,0,2,4,8,3,9};
+    vector<int> nums = { 1,2,3,1 };
     vector<string> strs = { "10","0001","111001","1","0" };
-    int result = findMaxForm(strs, 5, 3);
+
+    int result = rob(nums);
     cout << result << endl;
     return 0;
 }

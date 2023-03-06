@@ -575,11 +575,13 @@ lsof -i port
 
 ["10","0001","111001","1","0"] 5 3
 
+
+
 nohup java -jar suc-chat-backend-0.0.1-SNAPSHOT.jar > out.txt
 
 
 
-
+firewall-cmd --zone=public --add-port=8006/tcp --permanent Warning: ALREADY_ENABLED: 8006:tcp
 
 
 
