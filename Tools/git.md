@@ -35,3 +35,27 @@
 
 git checkout `123`
 
+
+
+
+
+
+
+
+
+##### 删除
+
+[(180条消息) Git删除本地文件后，如何同步到远程(代码文件名包含中文)_诸葛飞飞的博客-CSDN博客](https://blog.csdn.net/L_Y_Fei/article/details/107433089)
+
+
+
+
+
+
+
+
+
+##### merge
+
+[(180条消息) 详解Git合并冲突——原因及解决 “Automatic merge failed； fix conflicts and then commit the result.“_JiangHao Lan的博客-CSDN博客](https://blog.csdn.net/u010393510/article/details/127121169)
+
