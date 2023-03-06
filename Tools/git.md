@@ -59,3 +59,4 @@ git checkout `123`
 
 [(180条消息) 详解Git合并冲突——原因及解决 “Automatic merge failed； fix conflicts and then commit the result.“_JiangHao Lan的博客-CSDN博客](https://blog.csdn.net/u010393510/article/details/127121169)
 
+当在两个客户端同时进行操作同一份文件时,一端修改完push之后另一端再pull然后再修改
