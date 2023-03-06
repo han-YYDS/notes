@@ -19,6 +19,42 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+##### 生成makefile之前的文件依赖
+
+[Configure，Makefile.am, Makefile.in, Makefile文... (360doc.com)](http://www.360doc.com/content/12/0314/19/7982302_194349182.shtml)
+
+
+
+
+
+![image-20230306110504396](https://test4projectwf.oss-cn-hangzhou.aliyuncs.com/image/202303061105499.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ##### 源代码编译安装
 
 一般的编译安装过程如下：
