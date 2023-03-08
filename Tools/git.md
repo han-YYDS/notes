@@ -28,11 +28,6 @@
 
 
 
-```cpp
-```
-
-
-
 git checkout `123`
 
 
