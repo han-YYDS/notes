@@ -10,34 +10,17 @@
 
 [✨✨✨git教程](https://github.com/geeeeeeeeek/git-recipes/wiki)
 
-`asdf`
-
 #### 基本操作
 
 
 
-基本的上传操作
+##### 上传代码
 
 1. git add .
 2. git commit -m "备注"
 3. git push 
 
 上传到仓库之前需要pull
-
-
-
-
-
-```cpp
-```
-
-
-
-git checkout `123`
-
-
-
-
 
 
 
@@ -51,7 +34,16 @@ git checkout `123`
 
 
 
+##### 登录 access key
 
+
+
+[(180条消息) github开发人员在七夕搞事情：remote: Support for password authentication was removed on August 13, 2021._点亮～黑夜的博客-CSDN博客](https://shliang.blog.csdn.net/article/details/119698015?spm=1001.2101.3001.6650.2&utm_medium=distribute.pc_relevant.none-task-blog-2~default~CTRLIST~Rate-2-119698015-blog-119744116.pc_relevant_3mothn_strategy_and_data_recovery&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2~default~CTRLIST~Rate-2-119698015-blog-119744116.pc_relevant_3mothn_strategy_and_data_recovery&utm_relevant_index=5)
+
+```cpp
+git remote set-url origin https://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@github.com/han-YYDS/NetDisk.git
+// 中间的toekn对于每个仓库登录需要单独生成
+```
 
 
 
