@@ -26,8 +26,7 @@ sudo apt install net-tools
 
 - 桥接网络
   - 采用桥接网络要用手机热点而不能直接连接校园网
-  -  [记录\]Ubuntu18.04使用桥接模式实现上网_.ByeBye的博客-CSDN博客](https://blog.csdn.net/weixin_43843847/article/details/90938308)
-  -  ![image-20230302170854283](C:/Users/84221/AppData/Roaming/Typora/typora-user-images/image-20230302170854283.png)
+  - [记录\]Ubuntu18.04使用桥接模式实现上网_.ByeBye的博客-CSDN博客](https://blog.csdn.net/weixin_43843847/article/details/90938308)
   -  
 
 
