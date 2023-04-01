@@ -361,20 +361,81 @@ String& String::operator=(const String& s)
 
 ##### string的实现方式
 
+
+
+每种实现中, std::string中都包含以下信息
+
+1. 字符串的大小 size
+2. 字符串的容量 capacity
+3. 字符串内容本身 char*
+
+
+
 > - 深拷贝(eager copy)
 >   - 缺陷 - 做只读操作时,用深拷贝是没必要的
-> - 写时复制(COW)
+> - 写时复制(Copy On Write)
 >   - 单核
 >   - 原理 - 浅拷贝 + 引用计数
 >   - 引用计数
 > - 短字符串优化(SSO)
 >   - 多核
+>   - 小于15个字节,栈存放字符串
+>   - 大于15个字节,栈存放指针,指针指向堆
 >
 
 
 
 
 
+###### Eager Copy 深拷贝
+
+![image-20230330002138013](https://test4projectwf.oss-cn-hangzhou.aliyuncs.com/image/202303300021193.png)
+
+深拷贝: 拷贝字符串的内容,而不是指针
+
+但是这种在对字符串进行频繁复制而不作改变时,效率显得很低下
+
+
+
+###### Copy On Write 写时复制
+
+<img src="https://test4projectwf.oss-cn-hangzhou.aliyuncs.com/image/202303300022148.png" alt="img" style="zoom:67%;" />
+
+当两个string发生复制时,不会复制字符串的内容,而是增加一个引用计数,执行浅拷贝
+
+而如果需要修改时,则执行真正的深拷贝
+
+- 引用计数只可以存放到堆空间，要对引用计数进行修改
+
+- 当引用计数（_count）为普通数据成员。因为构造函数中，传入的对象用 const 进行修饰 （const 不能去掉，参见拷贝构造函数，传递一个临时对象，左值引用绑定到右值，错误），其成员_count 是不能修改的；
+- 当引用计数（_count）为 static 全局静态数据成员。 这样创建多个对象时，使用的引用计数都为同一个
+- 引用计数在堆空间放在存放数据位置的前面，放在后面对数据产生影响
+
+<img src="https://test4projectwf.oss-cn-hangzhou.aliyuncs.com/image/202303300026614.png" alt="image-20230330002612518" style="zoom:50%;" />
+
+
+
+
+
+
+
+###### Short String Optimization 短字符串优化
+
+<img src="https://test4projectwf.oss-cn-hangzhou.aliyuncs.com/image/202303300031155.png" alt="image-20230330003130059" style="zoom:50%;" />
+
+发生拷贝时需要复制一个指针,但是对于一个小的字符串而言,这个代价不如直接复制字符串的内容
+
+当字符串的长度**小于等于15个字节时(左)，buﬀer直接存放整个字符串；**
+
+**当字符串大于 15个字节时(右)，buﬀer存放的就是一个指针，指向堆空间的区域。** 这样做的好处是， 当字符串较小时，直接拷贝字符串，放在string内部，不用获取堆空间，**开销小**
+
+
+
+
+
+很短的（0~22）字符串用SSO，23字节表示字符串（包括’\0’），1字节表示长度
+中等长度的（23~255）字符串用 eager copy，8字节字符串指针，8字节size， 8字节capacity.
+很长的(大于255)字符串用COW，8字节指针（字符串和引用计数），8字节 size，8字节capacity
 
 
 
@@ -428,6 +489,16 @@ String& String::operator=(const String& s)
 char = (charproxy) str[i] - 调用的是 char类型的赋值语句
 
 (charproxy) str[i] = char - 调用的是 插入Proxy的赋值语句
+
+
+
+
+
+
+
+
+
+
 
 
 

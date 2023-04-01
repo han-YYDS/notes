@@ -2,6 +2,10 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <iterator>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
 
 using std::cout;
 using std::endl;
@@ -11,6 +15,10 @@ using std::string;
 using std::vector;
 using std::count;
 using std::find;
+using std::ifstream;
+using std::ios_base;
+using std::istream_iterator;
+using std::istreambuf_iterator;
 
 void print_vector(vector<int> nums) {
     cout << endl << "[";
@@ -98,10 +106,11 @@ int rob(vector<int>& nums) {
 
 
 int main() {
-    vector<int> nums = { 1,2,3,1 };
-    vector<string> strs = { "10","0001","111001","1","0" };
-
-    int result = rob(nums);
-    cout << result << endl;
-    return 0;
+    ifstream inputFile("demo.txt");
+    inputFile.unsetf(ios_base::skipws); // 关闭inputFile的
+    // 忽略空格标志
+    // string fileData((istream_iterator<char>(inputFile)), istream_iterator<char>());
+    string fileData((istreambuf_iterator<char>(inputFile)), istreambuf_iterator<char>());
+    cout << fileData << endl;
+    return 1;
 }
