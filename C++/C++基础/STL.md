@@ -1,6 +1,6 @@
 
 
-#### effective stl 50条建议
+### effective stl 50条建议
 
 [《Effective STL 》全书阅读笔记 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/458156007)
 
@@ -1104,7 +1104,861 @@ transfrom函数虽然是对一个范围进行拼接插入,但是每次只会插�
 
 
 
+##### **第 32 条：如果确实需要删除元素，则需要在 remove 这一类算法之后调用 erase**
 
+> remove 的原理：移动了区间中的元素，将 “不用被删除”的元素在v.begin()和newEnd之间，“需要被删除”的元素在newEnd和v.end()之间。它返回的迭代器是指向最后一个“不用被删除”的元素之后的元素。这个返回值相当于该区间“新的逻辑结尾”。
+>
+> 有点类似于partition算法,但是细节上不一样
+
+```cpp
+int test_item_32() {
+ std::vector<int> v;
+ v.reserve(10);
+ for (int i = 1; i <= 10; ++i) v.push_back(i);
+ fprintf(stdout, "v.size: %d\n", v.size()); // 输出10
+ v[3] = v[5] = v[9] = 99;
+ std::remove(v.begin(), v.end(), 99); // 删除所有值等于99的元素
+ fprintf(stdout, "v.size: %d\n", v.size()); // 仍然输出10, remove不是真正意义上的删除，因为它做不到
+ for (auto i : v) fprintf(stdout, "%d\n", i);
+ 
+ v.erase(std::remove(v.begin(), v.end(), 99), v.end()); // 真正删除所有值等于99的元素 
+ 
+ return 0;
+}
+// size 不会改变
+```
+
+remove之前:
+
+![image-20230410140940773](https://test4projectwf.oss-cn-hangzhou.aliyuncs.com/image/image-20230410140940773.png)
+
+remove之后:
+
+这里的newend即为remove的返回值
+
+![image-20230410140959540](https://test4projectwf.oss-cn-hangzhou.aliyuncs.com/image/image-20230410140959540.png)
+
+其逻辑如下
+
+<img src="https://test4projectwf.oss-cn-hangzhou.aliyuncs.com/image/image-20230410141518738.png" alt="image-20230410141518738" style="zoom:80%;" />
+
+
+
+书在讲解原理时的观点
+
+1. remove接收的是迭代器,而不是接收的容器,所以他不知道他作用于哪个容器
+2. remove也无法发现容器,因为没有办法从一个迭代器获取其对应的容器
+3. 想要删除容器中的元素时,需要调用的是该容器的成员函数 如erase
+
+
+
+
+
+##### **第 33 条：对包含指针的容器使用 remove 这一类算法时要特别小心**
+
+当容器中存放的是指向动态分配的对象的指针的时候，应该避免使用remove和类似的算法(remove_if和unique)。 
+
+如果容器中存放的不是普通指针，而是具有引用计数功能的智能指针，那么就可以直接使用erase-remove的习惯用法。
+
+调用remove之前:
+
+<img src="https://test4projectwf.oss-cn-hangzhou.aliyuncs.com/image/image-20230410142306658.png" alt="image-20230410142306658" style="zoom:67%;" />
+
+调用remove之后:
+
+会产生
+
+1. 有一些Widget将没有指针指向
+2. 有一些Widget将会被重复指向
+
+原因参考上一条中的remove原理图
+
+<img src="https://test4projectwf.oss-cn-hangzhou.aliyuncs.com/image/image-20230410142321931.png" alt="image-20230410142321931" style="zoom:80%;" />
+
+毫无疑问,这样会产生内存泄漏和重复释放
+
+
+
+```cpp
+class Widget33 {
+ public:
+ bool isRemove() const { return true; }
+};
+
+//如果 pwidget 是一个未被验证的 Widget33 则删除该指针，并置位空
+void delAndNullifyUnremove(Widget33*& pWidget) {
+ if (!pWidget->isRemove()) { // 删除并置空
+  delete pWidget;
+  pWidget = nullptr;
+ }
+}
+int test_item_33() {
+ std::vector<Widget33*> v;
+ for (int i = 0; i < 5; ++i) v.push_back(new Widget33);
+ 
+ // 删除那些指向未被验证过的Widget33对象的指针，会资源泄露
+ v.erase(
+     std::remove_if(v.begin(), v.end(), std::not1(std::mem_fun(&Widget33::isCertified))), v.end());
+ 
+ // 一种可以消除资源泄露的做法
+ // 先删除并置空,然后再调用erase_remove
+ std::for_each(v.begin(), v.end(), delAndNullifyUnremove);
+ v.erase(std::remove(v.begin(), v.end(), static_cast<Widget33*>(0)), v.end());
+ 
+    
+    
+ // 使用智能指针可防止资源泄露
+ std::vector<std::shared_ptr<Widget33>> v2;
+ for (int i = 0; i < 5; ++i) v2.push_back(std::make_shared<Widget33>());
+ // 下面语句需要编译器必须能够把智能指针类型std::shared<Widget33>隐式转换为对应的内置指针类型Widget33*才能通过编译
+ //v2.erase(std::remove_if(v2.begin(), v2.end(), std::not1(std::mem_fun(&Widget33::isCertified))), v2.end());
+ 
+ return 0;
+}
+```
+
+
+
+
+
+##### **第 34 条：了解哪些算法要求使用排序的区间作为参数**
+
+并非所有的算法都可以应用于任何区间。
+
+举例来说，remove算法要求单向迭代器并且要求可以通过这些迭代器向容器中的对象赋值。所以，它不能用于由输入迭代器指定的区间，也不适用于map或multimap，同样不适用于某些set和multiset的实现。
+
+同样地，很多排序算法要求随机访问迭代器，所以对于list的元素不可能调用这些算法。
+
+有些算法要求排序的区间，即区间中的值是排过序的。有些算法既可以与排序的区间一起工作，也可以与未排序的区间一起工作，但是当它们作用在排序的区间上时，算法会更加有效。
+
+要求排序区间的STL算法：binaray_search、lower_bound、upper_bound、equal_range、set_union、set_intersection、set_difference、set_symmetric_difference、merge、inplace_merge、includes。
+
+unique、unique_copy并不一定要求排序的区间，但通常情况下会与排序区间一起使用。
+
+当使用自定义有序时, 在调用这些要求排序的算法时,同时也需要将比较器传递给算法
+
+
+
+
+
+##### **第 35 条：通过 mismatch 或 lexicographical_compare 实现简单的忽略大小写的字符串比较**
+
+
+
+std::lexicographical_compare是strcmp的一个泛化版本。不过，strcmp只能与字符数组一起工作，而lexicographical_compare则可以与任何类型的值的区间一起工作。而且，strcmp总是通过比较两个字符来判断它们的关系相等、小于还是大于，而lexicographical_compare则可以接受一个判别式，由该判别式来决定两个值是否满足一个用户自定义的准则。
+
+strcmp通常是被优化过的，它们在字符串的处理上一般要比通用算法mismatch和lexicographical_compare快。
+
+
+
+
+
+
+
+
+
+##### **第 36 条: 理解copy_if算法的正确实现**
+
+```cpp
+int test_item_36() {
+ std::vector<int> v1{ 1, 2, 3, 4, 5 }, v2(v1.size());
+ 
+ auto it = std::copy_if(
+     v1.begin(), v1.end(), v2.begin(), [](int i) {
+         return (i % 2 == 1); 
+     });
+ v2.resize(std::distance(v2.begin(), it));
+ 
+ for (const auto& v : v2)
+  fprintf(stdout, "%d\n", v); // 1 3 5
+ 
+ return 0;
+}
+```
+
+C++11 中增加了 std::copy_if 函数。拷贝带条件判断的算法。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##### **第 37 条: 使用accumulate或者for_each进行区间统计**
+
+禁止传给accumulate的函数中有副作用  
+
+> accumulate中的第四个参数是其统计策略, 是一个仿函数.
+
+
+
+
+
+
+
+##### **第 38 条: 遵循按值传递的原则来设计函数子类**
+
+谓词
+
+1. 函数
+2. 函数指针
+3. 函数对象
+4. lambda表达式
+
+
+
+函数指针是值传递
+
+按值传递的问题就是,如果函数对象很大,那么其拷贝带来的开销就很大
+
+同时,如果传递的是虚函数,那么派生类对象传递给基类对象时,会造成切割问题
+
+所以应该建立一个小而单态的类,把所有数据和虚函数放到该实现类中
+
+
+
+
+
+
+
+
+
+##### **第 39 条: 确保判别式是”纯函数”**
+
+纯函数: 函数结果的返回值是一定的,根据参数的变化而变化而不随其他改变
+
+​	
+
+
+
+
+
+
+
+##### **第 40 条: 使仿函数可适配**
+
+[C++ 中 not1 not2 和 ptr_fun 是什么，C++11 中的替代品分别是什么？ - 知乎 (zhihu.com)](https://www.zhihu.com/question/37055794)
+
+- std::not1 和 std::not2 是用来把「符合某种特殊条件的『函数对象』」转换为 反义「函数对象」的函数。
+- std::ptr_fun 是用来把函数指针封装为「符合某种特殊条件的『函数对象』」的函数
+  - std::ptr_fun 是用来把函数指针封装为「符合某种特殊条件的『函数对象』」的函数
+
+
+
+##### **第 41 条: 理解ptr_fun、men_fun和mem_fun_ref的来由**
+
+std::ptr_fun：将函数指针转换为函数对象。
+
+std::mem_fun：将成员函数转换为函数对象(指针版本)。
+
+std::mem_fun_ref：将成员函数转换为函数对象(引用版本)。
+
+
+
+##### **第 42 条: 确保less与operator<具有相同的语义**
+
+> 避免修改less的意义在于,不要无故破坏对于less的期望,如果要采用这种方式来实现排序,其名字不叫less即可
+
+
+
+less会去调用operator<, 所以如果需要自定义排序规则时,可以==特化less==来切断less到operator的纽带
+
+`struct std::less<Widget>:` 
+
+在这里我们修改了std里面的组件
+
+程序员被允许用自定义类型特化std内的模板。特化std模板的选择几乎总是更 为优先
+
+operator<不仅是实现less的默认方式，它还是程序员希望less做的。让less做除operator<以外的事情是对程序员 预期的无故破坏。
+
+应该尽量避免修改less的行为，因为这样做很可能会误导其他的程序员。如果你使用了less，无论是显式地或是隐式地，你都需要确保它与operator<具有相同的意义。如果你希望以一种特殊的方式来排序对象，那么最好创建一个特殊的函数子类，它的名字不能是less。
+
+
+
+##### **第 43 条: 算法调用优先于手写的循环**
+
+[STL中mem_fun和mem_fun_ref的用法_mem_ref_StarLee的博客-CSDN博客](https://blog.csdn.net/starlee/article/details/1400811)
+
+[C++ STL mem_fun / mem_fun_ref / mem_fn 使用 - 简书 (jianshu.com)](https://www.jianshu.com/p/2e925dd67aa0)
+
+
+
+`mem_fun`是指针版的把成员函数转换成函数对象。
+
+`mem_fun_ref`是引用版的把成员函数转换成函数对象。
+`mem_fn`则是无论指针还是引用都可以把成员函数转换为函数对象。
+
+
+
+> 通过调用find_if,find这样的算法,而不是采用显式的循环会更好
+>
+> - for_each
+
+- 效率：算法通常比程序员自己写的循环效率更高。
+  - 显式循环需要每次都调用end来判断循环出口,而算法则只需要调用一次end即可
+  - 算法设计者对于容器的遍历是存在优化的
+- 正确性：自己写循环比使用算法更容易出错。
+  - 比如迭代器失效 [ deque 迭代器失效的问题详解_deque迭代器失效_monkey_D_feilong的博客-CSDN博客](https://blog.csdn.net/monkey_D_feilong/article/details/51824044)
+    - 删除包含首元素在内的元素时，会使被删除元素前的所有迭代器、指针、引用失效，被删除元素后的所有迭代器、指针、引用不会失效
+- 可维护性：使用算法的代码通常比手写循环的代码更加简洁明了。
+
+
+
+##### **第 44 条: 容器的成员函数优先于同名的算法**
+
+有些容器拥有和STL算法同名的成员函数。关联容器提供了count、find、lower_bound、upper_bound和 equal_range，而list提供了remove、remove_if、unique、sort、merge和reverse。
+
+例如
+
+```cpp
+// 也就是说,STL算法没有根据输入的参数来进行特化?
+set<int>::iterator i = s.find(727); // 使用find成员函数
+if (i != s.end()) ...
+set<int>::iterator i = find(s.begin(), s.end(), 727); // 使用find算法
+if (i != s.end()) ..
+```
+
+1. 效率
+   1. find成员函数运行花费对数时间，所以不管727是否存在于此set中，set::find只需执行不超过40次比较来查找 它，而一般只需要大约20次。相反，find算法运行花费线性时间，所以如果727不在此set中，它需要执行 1,000,000次比较。即使727在此set中，也平均需要执行500,000次比较来找到它。
+2. 正确性
+   1. 等价和相同的判断，STL算法判断两个对象是否相同的方法是检查的是它们是否相等，而关联容器是用等价来测试它们的“同一性”。 因此，find算法搜索用的是 相等，而find成员函数用的是等价。相等和等价间的区别可能造成成功搜索和不成功搜索的区别。
+3. 当操纵map 和multimap时，你可以自动地只处理key值而不是(key, value)对
+
+
+
+
+
+
+
+
+
+##### **第 45 条: 正确区分count、find、binary_search、lower_bound、upper_bound和equal_range**
+
+如果区间是排序的，那么通过binary_search、lower_bound、upper_bound和equal_range，你可以获得更快的查找速度(通常是对数时间的效率)。 
+
+如果迭代器并没有指定一个排序的区间，那么你的选择范围将局限于count、count_if、find以及find_if，而这些算法仅能提供线性时间的效率。
+
+
+
+
+
+- 有序区间
+
+  - binary_search: 判断是否存在
+
+  - lower_bound: 如果存在,返回其位置,如果不存在,则返回其在序列中应该在的位置
+    - 需要注意的是, 对于返回值的判断,这里是等价而不是相等
+
+  - upper_bound
+    - 返回的是后面那个迭代器,而不是指向该元素的
+
+  - equal_range: 返回一对迭代器,即这段序列中等价于该值的范围
+    - 如果两个迭代器相同,意味着该区间为空
+    - 两个迭代器的distance即为count
+
+- 无序区间
+
+  - find
+  - count
+
+
+
+
+
+
+
+
+
+##### **第 46 条: 考虑使用函数对象而不是函数作为STL算法的参数**
+
+
+
+函数对象比函数更高效?
+
+我们必须知道不可能把一个函数作为参数传给另一个函数。当我们试图把一个函数作为参数时，编译器默默地把函数转化为一个指向那个函数的指针，而那个指针是我们真正传递的,所以在使用时也是通过指针调用
+
+所以编译器不会内联 通过指针调用的函数, 因为使用函数指针作为参数时会抑制内联
+
+编译器在调用函数时,会在编译期就将函数展开从而降低指针调用的开销  
+
+
+
+
+
+
+
+
+
+##### **第 47 条: 避免产生”直写型”(write-only)的代码**
+
+即减少函数调用的层数,如果过于复杂,将其拆分
+
+
+
+
+
+
+
+
+
+##### **第 48 条: 总是包含(#include)正确的头文件**
+
+C++标准与C的标准有所不同，它没有规定标准库中的头文件之间的相互包含关系。
+
+总结每个与STL有关的标准头文件中所包含的内容：
+
+(1).几乎所有的容器都在同名的头文件里，比如，``vector在<vector>中声明，list在<list>中声明等。例外的是<set>和<map>。<set>声明了set和multiset，<map>声明了map和multimap。`  
+
+(2). 除了4个STL算法以外，其它所有的算法都被声明在`<algorithm>`中，这4个算法是accumulate、inner_product、adjacent_difference和partial_sum，它们被声明在头文件`<numeric>  `中。
+
+(3). 特殊类型的迭代器，包括istream_iterator和istreambuf_iterator，被声明在`<iterator>  `中。
+
+(4). 标准的仿函数(比如`less<T>`)和仿函数适配器(比如not1、bind2nd)被声明在头文件`<functional>  `中。
+
+任何时候如果你使用了某个头文件中的一个STL组件，那么你就一定要提供对应的#include指令，即使你正在使用的STL平台允许你省略#include指令，你也要将它们包含到你的代码中。当你需要将代码移植到其它平台上的时候，移植的压力就会减轻。
+
+
+
+
+
+
+
+
+
+
+
+##### **第 49 条: 学会分析与STL相关的编译器诊断信息**
+
+分析编译器的报错
+
+书里讲了两个例子
+
+第一个是对于string s(2) 的错误调用构造函数, 由于一参构造中有一种重载其参数为构造器,所以报错中有很多关于 allocator的信息
+
+第二个是关于错误的在const 成员函数中,用const常量为作为变量构造的返回值,原因是在const函数中,所有变量都会被变成常量,所以如果在该变量上使用某函数然后将返回值赋予一个非const变量就会产生错误
+
+在这一节中,要学会将冗杂的报错信息进行简化
+
+因为在源码中存在大量的typedef, 例如string会在报错信息中以 `basic_string<char, string_char_traits<char>, __default_alloc_template<false,0> >  `的形式展示,所以要学会将其简化
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##### **第 50 条: 熟悉与 STL 相关的 Web 站点**
+
+
+
+
+
+
+
+
+
+### 源码解析
+
+
+
+STL分为六大组件：
+
+- 容器(container)：常用数据结构，大致分为两类，序列容器，如vector，list，deque，关联容器，如set，map。在实现上，是类模板(class template)
+- 迭代器(iterator)：一套访问容器的接口，行为类似于指针。它为不同算法提供的相对统一的容器访问方式，使得设计算法时无需关注过多关注数据。（“算法”指广义的算法，操作数据的逻辑代码都可认为是算法）
+- 算法(algorithm)：提供一套常用的算法，如sort，search，copy，erase … 在实现上，可以认为是一种函数模板(function template)。
+- 配置器(allocator)：为容器提供空间配置和释放，对象构造和析构的服务，也是一个class template。
+- 仿函数(functor)：作为函数使用的对象，用于泛化算法中的操作。
+- 配接器(adapter)：将一种容器修饰为功能不同的另一种容器，如以容器vector为基础，在其上实现stack，stack的行为也是一种容器。这就是一种配接器。除此之外，还有迭代器配接器和仿函数配接器。
+
+
+
+#### 1.allocator
+
+通常我们可以在代码中用"#include <memory>"来包含它，它的实际实现在三个文件中：
+
+- stl_construct.h: 对象的构造和析构
+- stl_alloc.h: 空间的配置和释放
+- stl_uninitialized.h: 内存基本工具，用于提升性能
+
+
+
+
+
+
+
+```cpp
+std::alloc
+```
+
+
+
+
+
+
+
+
+
+#### 2.迭代器iterator
+
+
+
+
+
+###### iterator是胶合剂
+
+
+
+STL的中心思想在于：将数据容器（containers）和算法（algorithms）分开，彼此独立设计，最后在以一贴胶着剂将它们撮合在一起,这里所讲的胶合剂就是iterator, 即算法通过调用iterator来实现对于容器的操作
+
+> 我认为迭代器是指针的包装
+
+
+
+
+
+
+
+书中所给的例子是 find算法, find算法中,传入参数为InputIterator, 返回也是InputIterator, 
+
+```cpp
+/*****************************************************************************************/
+// find
+// 在[first, last)区间内找到等于 value 的元素，返回指向该元素的迭代器
+/*****************************************************************************************/
+template <class InputIter, class T>
+InputIter
+find(InputIter first, InputIter last, const T& value)
+{
+  while (first != last && *first != value)
+    ++first;
+  return first;
+}
+```
+
+在使用他时,我们可以使用 list, deque, vector. 都可以用这个find函数来实现对于容器的查找
+
+但是, 容器的底层实现并不一样, 数组的vector和链表的list, 其底层的find逻辑并不会一样
+
+这就是迭代器的胶合作用
+
+
+
+###### iterator是智能指针
+
+
+
+指针有两个重要的功能
+
+1. dereference - 解引用: 提取指针指向的内容
+   1. operator *
+2. member access - 成员访问: 指针所指对象的成员
+   1. operator ->
+
+
+
+关于智能指针,可以以 auto_ptr为参考
+
+[ C++智能指针：auto_ptr详解_auto_ptr.get_绘夜的博客-CSDN博客](https://blog.csdn.net/czc1997/article/details/84026887)
+
+
+
+```cpp
+// --------------------------------------------------------------------------------------
+// 模板类: auto_ptr
+// 一个具有严格对象所有权的小型智能指针
+template <class T>
+class auto_ptr
+{
+public:
+  typedef T    elem_type;
+
+private:
+  T* m_ptr;  // 实际指针
+
+public:
+  // 构造、复制、析构函数
+  explicit auto_ptr(T* p = nullptr) :m_ptr(p) {}
+  auto_ptr(auto_ptr& rhs) :m_ptr(rhs.release()) {} // 
+  template <class U>
+  auto_ptr(auto_ptr<U>& rhs) : m_ptr(rhs.release()) {}
+
+  auto_ptr& operator=(auto_ptr& rhs)
+  {
+    if (this != &rhs)
+    {
+      delete m_ptr;
+      m_ptr = rhs.release();
+    }
+    return *this;
+  }
+  template <class U>
+  auto_ptr& operator=(auto_ptr<U>& rhs)
+  {
+    if (this->get() != rhs.get())
+    {
+      delete m_ptr;
+      m_ptr = rhs.release();
+    }
+    return *this;
+  }
+
+  ~auto_ptr() { delete m_ptr; }
+
+public:
+  // 重载 operator* 和 operator->
+  T& operator*()  const { return *m_ptr; }
+  T* operator->() const { return m_ptr; }
+
+  // 获得指针
+  T* get() const { return m_ptr; }
+
+  // 释放指针
+  T* release()
+  {
+    T* tmp = m_ptr;
+    m_ptr = nullptr;
+    return tmp;
+  }
+
+  // 重置指针
+  void reset(T* p = nullptr)
+  {
+    if (m_ptr != p)
+    {
+      delete m_ptr;
+      m_ptr = p;
+    }
+  }
+};
+```
+
+
+
+而此时,我们模仿这个, 设计一个list的迭代器
+
+```cpp
+// 以find为介入口, 我们的list_iterator应当具有以下功能
+1. 解引用 返回listItem
+2. 递增 指向list的下一给listItem
+3. 该迭代器应当适用于任何形态的节点
+
+    // 下面的代码都是从tinystl复制过来的,可以不用仔细看
+
+// list 的迭代器设计
+template <class T>
+struct list_iterator : public mystl::iterator<mystl::bidirectional_iterator_tag, T>
+{
+  typedef T                                 value_type;
+  typedef T*                                pointer;
+  typedef T&                                reference;
+  typedef typename node_traits<T>::base_ptr base_ptr;
+  typedef typename node_traits<T>::node_ptr node_ptr;
+  typedef list_iterator<T>                  self;
+
+  base_ptr node_;  // 指向当前节点
+
+  // 构造函数
+  list_iterator() = default;
+  list_iterator(base_ptr x)
+    :node_(x) {}
+  list_iterator(node_ptr x)
+    :node_(x->as_base()) {}
+  list_iterator(const list_iterator& rhs)
+    :node_(rhs.node_) {}
+
+  // 重载操作符
+  reference operator*()  const { return node_->as_node()->value; }
+  pointer   operator->() const { return &(operator*()); }
+
+  self& operator++()
+  {
+    MYSTL_DEBUG(node_ != nullptr);
+    node_ = node_->next;
+    return *this;
+  }
+  self operator++(int)
+  {
+    self tmp = *this;
+    ++*this;
+    return tmp;
+  }
+  self& operator--()
+  {
+    MYSTL_DEBUG(node_ != nullptr);
+    node_ = node_->prev; 
+    return *this;
+  }
+  self operator--(int)
+  {
+    self tmp = *this;
+    --*this;
+    return tmp;
+  }
+
+  // 重载比较操作符
+  bool operator==(const self& rhs) const { return node_ == rhs.node_; }
+  bool operator!=(const self& rhs) const { return node_ != rhs.node_; }
+};
+
+// 如果要设计listIterator, 必须对list的底层实现有丰富的了解, 所以干脆直接把interator的构造工作交给容器设计者
+
+
+```
+
+
+
+
+
+###### 萃取
+
+当我们设计algorithm时, 我们的参数自然是iterator, 同时, 我们可能会用到其所指向的元素, 此时,我们就需要知道其type
+
+迭代器所指对象的type 被称为 value type, 
+
+我们可以在迭代器内部,内嵌一个类型说明,
+
+```cpp
+// 萃取某个迭代器的 value_type
+template <class Iterator>
+typename iterator_traits<Iterator>::value_type*
+value_type(const Iterator&)
+{
+  return static_cast<typename iterator_traits<Iterator>::value_type*>(0);
+}
+```
+
+
+
+这里的迭代器都是class type, 而如果是STL容器,还需要接收原生指针(指向容器元素的指针)
+
+所以我们需要针对原生指针作出特殊化处理
+
+template partial specialization 模板偏特化 可以做到
+
+
+
+###### 偏特化的意义
+
+
+
+
+
+
+
+
+
+###### 迭代器型别
+
+迭代器型别即迭代器的特性, 萃取机制使得传入一个迭代器(或者是原生指针), 能够让外界获取其相应的型别
+
+```cpp
+// 针对原生指针的偏特化版本
+template <class T>
+struct iterator_traits<T*>
+{
+  typedef random_access_iterator_tag           iterator_category;
+  typedef T                                    value_type; 
+  typedef T*                                   pointer;
+  typedef T&                                   reference;
+  typedef ptrdiff_t                            difference_type;
+};
+```
+
+
+
+
+
+
+
+
+
+###### 迭代器分类
+
+
+
+```cpp
+// 五种迭代器类型 作为标记使用所以不需要成员
+struct input_iterator_tag {};
+struct output_iterator_tag {};
+struct forward_iterator_tag : public input_iterator_tag {};
+struct bidirectional_iterator_tag : public forward_iterator_tag {};
+struct random_access_iterator_tag : public bidirectional_iterator_tag {};
+
+
+
+// 以下函数用于让迭代器前进 n 个距离
+template <class InputIterator, class Distance>
+void advance(InputIterator& i, Distance n)
+{
+  advance_dispatch(i, n, iterator_category(i));
+}
+
+// 重载 - 使得在编译期就能够选择好正确的版本
+	// 第三个参数纯粹是为了重载服务
+// advance 的 input_iterator_tag 的版本
+
+template <class InputIterator, class Distance>
+void advance_dispatch(InputIterator& i, Distance n, input_iterator_tag)
+{
+  while (n--) 
+    ++i;
+}
+
+// advance 的 bidirectional_iterator_tag 的版本
+template <class BidirectionalIterator, class Distance>
+void advance_dispatch(BidirectionalIterator& i, Distance n, bidirectional_iterator_tag)
+{
+  if (n >= 0)
+    while (n--)  ++i;
+  else
+    while (n++)  --i;
+}
+
+// advance 的 random_access_iterator_tag 的版本
+template <class RandomIter, class Distance>
+void advance_dispatch(RandomIter& i, Distance n, random_access_iterator_tag)
+{
+  i += n;
+}
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+```cpp
+
+
+```
 
 
 

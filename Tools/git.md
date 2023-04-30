@@ -14,6 +14,15 @@
 
 
 
+##### 根据已有代码创建仓库
+
+1. git init 创建本地仓库
+2. git add . 将当前目录的文件加入到git中
+3. git commit -m ""
+4. git remote add 
+
+
+
 ##### 上传代码
 
 1. git add .
@@ -43,6 +52,10 @@
 ```cpp
 git remote set-url origin https://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@github.com/han-YYDS/NetDisk.git
 // 中间的toekn对于每个仓库登录需要单独生成
+
+git remote set-url origin https://ghp_qbSekLQQIxyYttgOVd9c9YPlm9xpac1uryX@github.com/han-YYDS/paraRC.git
+git remote set-url origin https://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@github.com/han-YYDS/bustub.git
+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
 ```
 
 
@@ -52,3 +65,10 @@ git remote set-url origin https://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@githu
 [(180条消息) 详解Git合并冲突——原因及解决 “Automatic merge failed； fix conflicts and then commit the result.“_JiangHao Lan的博客-CSDN博客](https://blog.csdn.net/u010393510/article/details/127121169)
 
 当在两个客户端同时进行操作同一份文件时,一端修改完push之后另一端再pull然后再修改
+
+
+
+1. git pull, 拉取代码,并automerge
+2. 文件产生冲突,在文件中解决冲突.
+3. git add .
+4. git commit 
