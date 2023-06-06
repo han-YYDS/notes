@@ -1,3 +1,7 @@
+###### 安装
+
+[ VMware虚拟机下安装Ubuntu20.04（保姆级教程）_vmware虚拟机怎么安装ubuntu_算法真不会的博客-CSDN博客](https://blog.csdn.net/qq_45657288/article/details/116084337)
+
 
 
 
@@ -60,6 +64,10 @@ sudo apt-get install openssh-server
 解决error - 删除lock文件
 sudo rm /var/lib/dpkg/lock
 ```
+
+
+
+ssh免密登录
 
 
 

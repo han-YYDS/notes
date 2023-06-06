@@ -19,7 +19,10 @@
 1. git init 创建本地仓库
 2. git add . 将当前目录的文件加入到git中
 3. git commit -m ""
-4. git remote add 
+4. git remote add origin <git url>
+5. git push origin master
+   1. 输入username和token
+
 
 
 
@@ -49,14 +52,13 @@
 
 [(180条消息) github开发人员在七夕搞事情：remote: Support for password authentication was removed on August 13, 2021._点亮～黑夜的博客-CSDN博客](https://shliang.blog.csdn.net/article/details/119698015?spm=1001.2101.3001.6650.2&utm_medium=distribute.pc_relevant.none-task-blog-2~default~CTRLIST~Rate-2-119698015-blog-119744116.pc_relevant_3mothn_strategy_and_data_recovery&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2~default~CTRLIST~Rate-2-119698015-blog-119744116.pc_relevant_3mothn_strategy_and_data_recovery&utm_relevant_index=5)
 
-```cpp
-git remote set-url origin https://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@github.com/han-YYDS/NetDisk.git
-// 中间的toekn对于每个仓库登录需要单独生成
+[(205条消息) github的token使用方法_github token_chengwenyang的博客-CSDN博客](https://blog.csdn.net/chengwenyang/article/details/120060010)
 
-git remote set-url origin https://ghp_qbSekLQQIxyYttgOVd9c9YPlm9xpac1uryX@github.com/han-YYDS/paraRC.git
-git remote set-url origin https://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@github.com/han-YYDS/bustub.git
-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
-```
+
+
+在现版本的github中,登录需要的是 token而不是password,
+
+所以当执行push命令时,需要输入username和password,这里的password就是token
 
 
 
