@@ -1986,3 +1986,37 @@ void advance_dispatch(RandomIter& i, Distance n, random_access_iterator_tag)
 
 
 
+### std::stl具体使用
+
+
+
+
+
+#### vector
+
+
+
+##### emplace_back()和push_back()的区别
+
+emplace_back() 和 push_back() 的区别，就在于底层实现的机制不同。
+
+- push_back() 向容器尾部添加元素时，首先会创建这个元素，然后再将这个元素拷贝或者移动到容器中（如果是拷贝的话，事后会自行销毁先前创建的这个元素）；
+- emplace_back() 在实现时，则是直接在容器尾部创建这个元素，==省去了拷贝或移动元素==的过程。
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### unordered_set
+
+
+
+采用count判断元素是否存在;
