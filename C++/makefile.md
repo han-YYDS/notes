@@ -557,3 +557,67 @@ make的参数的是“-k”或是“--keep-going”，这个参数的意思是�
 
 
 
+
+
+
+
+
+
+
+
+### cmake
+
+
+
+
+
+CMake是一个用于管理跨平台项目构建的工具，它使用CMakeLists.txt文件来描述项目的配置和构建过程。以下是一个简单的CMakeLists.txt文件的示例，展示了如何构建一个项目：
+
+```
+cmakeCopy code# 指定最低的CMake版本
+cmake_minimum_required(VERSION 3.10)
+
+# 设置项目名称
+project(MyProject)
+
+# 添加可执行文件
+add_executable(my_executable main.cpp)
+
+# 添加库文件（如果有的话）
+# add_library(my_library source1.cpp source2.cpp)
+
+# 如果需要链接外部库，可以使用以下命令
+# target_link_libraries(my_executable my_library)
+
+# 如果有头文件，可以将头文件的路径包含在项目中
+# target_include_directories(my_executable PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+```
+
+上述示例中，`CMakeLists.txt`文件指定了项目的名称为"MyProject"，并创建了一个可执行文件`my_executable`，该可执行文件的源代码位于`main.cpp`中。如果项目包含库文件，可以使用`add_library`命令添加库文件，并使用`target_link_libraries`命令将库文件链接到可执行文件中。
+
+在实际项目中，你需要根据项目的结构和依赖关系进行调整。你可能需要在`CMakeLists.txt`中包含更多的源文件、库文件，以及其他配置选项。你可以在CMake官方文档中找到更详细的信息：[CMake Documentation](https://cmake.org/documentation/)
+
+要构建项目，可以按照以下步骤：
+
+1. 在项目的根目录创建一个`CMakeLists.txt`文件。
+
+2. 打开终端，导航到项目根目录。
+
+3. 运行以下命令：
+
+   ```
+   bashCopy code
+   cmake .
+   ```
+
+4. 运行生成的构建系统（如Makefile、Visual Studio项目等），具体命令取决于你的平台和配置。
+
+5. 构建项目：
+
+   ```
+   bashCopy code
+   make  # 对于Makefile
+   ```
+
+这些步骤将根据`CMakeLists.txt`文件中的配置信息生成构建系统，并使用该构建系统构建项目。
+
